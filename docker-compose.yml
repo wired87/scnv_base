@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  stemcnv-pipeline:
+    image: ${STEMCNV_DOCKER_IMAGE:-stemcnv-check:1.0.0}
+    
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        STEMCNV_COMMIT: ${STEMCNV_COMMIT}
+
+    deploy:
+      resources:
+        limits:
+          memory: ${DOCKER_MEMORY_LIMIT:-9000m}
+
+    volumes:
+      - ./:/work
+      - ./data:/work/data
+      - ./logs:/work/logs
+      - ./.snakemake:/work/.snakemake
+      - ${STEMCNV_CACHE:-/cache}:/cache
+
+    # Automatisches Laden aller .env Variablen in den Container
+    env_file:
+      - .env
+
+    # Dynamisches Command mit CLI-Kombination aus Variablen der .env
+    command: snakemake --cores ${CORES:-8} ${STEMCNV_SNAKEMAKE_OPTIONS}
